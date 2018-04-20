@@ -68,15 +68,16 @@ Opt("GUICoordMode", 2)
 GUISetCoord(1153, 231)
 GUISetState(@SW_SHOW)
 
-Global $Pa = GUICtrlRead($GUI_EVENT_PA)
-GLobal $cost = GUICtrlRead($GUI_EVENT_ATK)
-Global $Pm = GUICtrlRead($GUI_EVENT_PM)
-Global $Po = GUICtrlRead($GUI_EVENT_PO)
+Func FreshStart()
+   Sleep(100)
 
-If $cost > $Pa Or $Pa <= 0 Or $Pm <= 0 Or $Po <= 0 Or $cost <= 0 Then
-   $reason("Error detected around Pa/Pm/Po/Atk")
-   Exit
-EndIf
+   GUICtrlSetData($GUI_EVENT_START, "Start")
+   GUICtrlSetState($GUI_EVENT_START, 64)
+   GUICtrlSetState($GUI_EVENT_PA, 64)
+   GUICtrlSetState($GUI_EVENT_PM, 64)
+   GUICtrlSetState($GUI_EVENT_ATK, 64)
+   GUICtrlSetState($GUI_EVENT_PO, 64)
+EndFunc
 
 While 1
    $nMsg = GUIGetMsg()
@@ -112,17 +113,25 @@ Func debug($messageJournal, $autresInfos = "")
 EndFunc
 
 Func Requierments()
+   Global $Pa = GUICtrlRead($GUI_EVENT_PA)
+   GLobal $cost = GUICtrlRead($GUI_EVENT_ATK)
+   Global $Pm = GUICtrlRead($GUI_EVENT_PM)
+   Global $Po = GUICtrlRead($GUI_EVENT_PO)
+
    $process = ProcessExists("Lindo.exe")
    If $process = 0 Then
 	  MsgBox(0,"Error","Unable to find : Lindo, make sure you launched it & restart this program")
 	  If 1 Then
 		 info("Unable to find the game.")
-		 ; TODO (HoPollo) : Reset everything like fresh launch
+		 FreshStart()
 	  EndIf
+   ElseIf $Pa < $cost Or $Pa <= 0 Or $Pm <= 0 Or $Po <= 0 Or $cost <= 0 Then
+	  MsgBox(0, "Error", "Wrong number around Pa/Pm/Atk/Po")
+	  If 1 Then FreshStart()
    Else
-	  debug("Debug mode : ON")
-	  info("Sleeps time (ms) :" & $sleep)
-	  debug("Sleeps time (ms) :" & $sleep)
+	  If $debugMode Then debug("Debug mode : ON")
+	  If $debugMode Then debug("Sleeps time :" & $sleep & "ms")
+	  If Not $debugMode Then info("Steps :" & $sleep & "ms")
 
 	  Start()
    EndIf
