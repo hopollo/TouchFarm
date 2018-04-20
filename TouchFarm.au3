@@ -20,8 +20,9 @@
 #include <ImageSearch.au3>
 #include <GuiEdit.au3>
 
+Global $imageUrl = "/imgs/"
 Global $targetImage[] = ["target1.png","target2.png","target3.png"]
-Global $sort = "spell.png"
+Global $spell = "spell.png"
 Global $popupCross = "close.png"
 Global $succes[] = ["claim1.png","claim2.png"]
 
@@ -47,7 +48,7 @@ Global $mapMaxTop = 36
 Global $mapMaxRight = 1155
 Global $mapMaxBottom = 737
 
-Global $mapMax[] = [$mapMaxLeft, $mapMaxRight, $mapMaxTop, $mapMaxBottom]
+;Global $mapMax[] = [$mapMaxLeft, $mapMaxRight, $mapMaxTop, $mapMaxBottom]
 
 Global $reason = "Thanks for using this program, see you next time."
 
@@ -65,7 +66,7 @@ $GUI_EVENT_PA = GUICtrlCreateInput("6", 10, 222, 15, 16)
 $GUI_EVENT_PM = GUICtrlCreateInput("3", 30, 222, 15, 16)
 GUICtrlCreateLabel("ATK | PO", 2, 238, 50)
 $GUI_EVENT_ATK = GUICtrlCreateInput("3", 10, 251, 15, 16)
-$GUI_EVENT_PO = GUICtrlCreateInput("5", 30, 251, 15, 16)
+$GUI_EVENT_PO = GUICtrlCreateInput("7", 30, 251, 15, 16)
 Opt("GUICoordMode", 2)
 GUISetCoord(1153, 231)
 GUISetState(@SW_SHOW)
@@ -171,9 +172,8 @@ Func Start()
 
 	  ; ISSUE : Detection from image is very bad
 	  Local $randomImageOfTarget = Random(0, UBound($targetImage)-1, 1)
- 	  debug("Choosen Img: " & $targetImage[$randomImageOfTarget])
 	  Global $3 = _ImageSearch($targetImage[$randomImageOfTarget], 100, 0)
- 	  debug($3)
+	  debug("Scan : " & $targetImage[$randomImageOfTarget] & "->" & $3)
 
 	  Global $4 = PixelGetColor(1177, 59) ; HealthColor(middle)
 
@@ -207,7 +207,7 @@ Func RunAround()
    Sleep(250)
 
    ;TODO (HoPollo) : Implement random map switching
-   Local $direction = Random(0, UBound($mapMax) - 1, 1)
+;~    Local $direction = Random(0, UBound($mapMax) - 1, 1)
 ;~    MouseClick("", $maxMap[$direction])
 
    Start()
@@ -230,9 +230,8 @@ EndFunc
 
 Func Positionning()
    info("Combat detected")
-   If $specLock = False Then
-	  CombatSettings()
-   EndIf
+   If $specLock = False Then CombatSettings()
+
    $healing = False
    Sleep($sleep)
 
@@ -251,13 +250,17 @@ Func Positionning()
 EndFunc
 
 Func CombatSettings()
-   debug("Spec mode locked"); Usually needed to be done once per session
-
-   MouseClick("", 1168, 94)
+   ;ISSUE : Not finding 10/10 Spec Icon
    Sleep($sleep)
-   MouseClick("", 1206, 72)
 
-   $specLock = True
+   MouseClick("", 1168, 94) ; Develop top menu slider
+
+   $lock = _ImageSearch("specBtn.png")
+   Sleep(250)
+   If IsArray($lock) Then
+	  MouseClick("", $lock[0], $lock[1])
+	  $specLock = True
+   EndIf
 EndFunc
 
 Func SearchingCoord()
@@ -300,65 +303,54 @@ Func SearchingCoord()
    Sleep($sleep)
 
    $bar = PixelGetColor(1358, 584) ;check if it's his turn to play
-   $spellState = _ImageSearch($sort) ;check if main spell available state
-
+   $spellState = _ImageSearch($spell) ;check if main spell available state
 
    If $bar = $barTurnState And IsArray($spellState) Then
 	  debug("Turn started + Spell available")
 	  Sleep($sleep)
-	  debug("Pos : Mob "&$mobCreature[0]&","&$mobCreature[1]&" | Sadi : "&$meCreature[0]&","&$meCreature[1])
 
-	  Global $calcX = $mobCreature[0] - $meCreature[0]
-	  Global $calcY = $mobCreature[1] - $meCreature[1]
+	  $xMeStartPoint = $meCreature[0] - 25 ; To start from the middle of the player case
+	  $yMeStartPoint = $meCreature[1] + 40 ; To start from the middle of the player case
 
-	  debug("Calc : X:"& Abs($calcX)&" Y:"& Abs($calcY))
+	  Local $inRange = PixelSearch($xMeStartPoint - (40 * $Po), $yMeStartPoint - (25 * $Po), $xMeStartPoint + (40 * $Po), $yMeStartPoint + (25 * $Po), $enemyColor, 2)
+	  If IsArray($inRange) Then
+		 debug("Mob founded in range")
+		 $relances = $Pa / $cost
+		 $combo = Int($relances)
 
-	  ;TODO (HoPollo): Rework on maxPO, working 8/10 times
-	  If Abs($calcX) > 300 Or Abs($calcY) > 300 Then
+		 Do
+			MouseClick("", $spellState[0], $spellState[1]) ; Click on main spell
+			MouseClick("", $inRange[0], $inRange[1] + 5)	; Click a bit too high, so Y is compensated
+			$combo = $combo - 1
+			debug("Combo : " & $combo &"/"& Int($relances))
+		 Until $combo = 0
+
+		 EndTurn()
+	  Else
 		 Chase()
 	  EndIf
-
-	  $relances = $Pa / $cost
-	  $combo = Int($relances)
-	  Do
-		 MouseClick("", $spellState[0], $spellState[1]) ; Click on main spell
-		 MouseClick("", $mobCreature[0], $mobCreature[1] + 15)	; Click a bit too high, so Y is compensated
-		 Sleep($sleep + 500)
-		 $combo = $combo - 1
-		 debug("Combo : " & $combo &"/"& Int($relances))
-	  Until $combo = 0
-
-   Else
-	  SearchingCoord()
    EndIf
 
-   EndTurn()
+   SearchingCoord()
 EndFunc
 
 Func Chase()
    debug("Chasing...")
-;~    Sleep($sleep)
+   Sleep($sleep)
 
-;~    Local $X = $meCreature[0] + (35 * $Pm)
-;~    Local $Y = $meCreature[1] + (35 * $Pm)
+   ;TODO (HoPollo) : Implement chasing feature
 
-;~    info("Strat :" & $X & " X, " & $Y)
-
-;~    MouseClick("", $X, $Y)
-
-;~    SearchingCoord()
    EndTurn()
 EndFunc
 
 Func EndTurn()
    debug("End turn...")
+
    Sleep($sleep)
 
    $endTurnBtn = _ImageSearch("passBtn.png")
 
-   If IsArray($endTurnBtn) Then
-	  MouseClick("",$endTurnBtn[0], $endTurnBtn[1])
-   EndIf
+   If IsArray($endTurnBtn) Then MouseClick("",$endTurnBtn[0], $endTurnBtn[1])
 
    SearchingCoord()
 EndFunc
@@ -367,9 +359,7 @@ Func ClosePopup()
    debug("Popup detected")
 
    $cross = _ImageSearch($popupCross)
-   If IsArray($cross) Then
-	  MouseClick("", $cross[0], $cross[1])
-   EndIf
+   If IsArray($cross) Then MouseClick("", $cross[0], $cross[1])
 
    Start()
 EndFunc
@@ -379,8 +369,9 @@ Func ClaimSucces()
    $claimed = False
    Sleep($sleep)
 
+   MouseClick("", $9[0], $9[1])
+
    Do
-	  MouseClick("", $9[0], $9[1])
 	  Local $claimBtn = _ImageSearch($succes[1])
 	  If IsArray($claimBtn) Then
 		 MouseClick("", $claimBtn[0], $claimBtn[1])
@@ -395,24 +386,23 @@ EndFunc
 Func Regen()
    info("Healing...")
    ;TODO (HoPollo) : Maybe replace all mouseclick by imagesearch for better accuracy/detection ?
-
+   $healing = False
    Local $regen1 = _ImageSearch("regen1.png")
-   If 1 Then MouseClick("",$regen1[0], $regen1[1])
+   If IsArray($regen1) Then MouseClick("",$regen1[0], $regen1[1])
 
    Sleep($sleep)
+   Do
+	  $emote1 = PixelGetColor(1125, 735) ; Poeple icon
+	  If $emote1 = 0xBADF2F Then
+		 MouseClick("", 1125, 735)
+		 Sleep($sleep)
 
-   $emote1 = PixelGetColor(1125, 735) ; Poeple icon
-   If $emote1 = 0xBADF2F Then
-	  MouseClick("", 1125, 735)
-	  Sleep($sleep)
+		 $emote2 = PixelGetColor(578, 685) ; Chair icon
+		 if $emote2 = 0x50321F Then MouseClick("", 578, 685)
 
-	  $emote2 = PixelGetColor(578, 685) ; Chair icon
-	  if $emote2 = 0x50321F Then
-		 MouseClick("", 578, 685)
+		 $healing = True
 	  EndIf
-
-	  $healing = True
-   EndIf
+   Until $healing
 
    Start()
 EndFunc
