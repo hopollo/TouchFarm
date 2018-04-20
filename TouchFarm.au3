@@ -16,6 +16,7 @@
 #include <StaticConstants.au3>
 #include <WindowsConstants.au3>
 #include <ScrollBarsConstants.au3>
+#include <MsgBoxConstants.au3>
 #include <ImageSearch.au3>
 #include <GuiEdit.au3>
 
@@ -78,6 +79,8 @@ Func FreshStart()
    GUICtrlSetState($GUI_EVENT_PM, 64)
    GUICtrlSetState($GUI_EVENT_ATK, 64)
    GUICtrlSetState($GUI_EVENT_PO, 64)
+
+   Requierments()
 EndFunc
 
 While 1
@@ -120,22 +123,43 @@ Func Requierments()
    Global $Po = GUICtrlRead($GUI_EVENT_PO)
 
    $process = ProcessExists("Lindo.exe")
-   If $process = 0 Then
-	  MsgBox(0,"Error","Unable to find : Lindo, make sure you launched it & restart this program")
-	  If 1 Then
-		 info("Unable to find the game.")
-		 FreshStart()
-	  EndIf
-   ElseIf $Pa < $cost Or $Pa <= 0 Or $Pm <= 0 Or $Po <= 0 Or $cost <= 0 Then
+   $lindo = "[TITLE:Lindo]"
+   $focus = WinActive($lindo)
+   $state = WinGetState($lindo)
+
+   Select
+	  Case $process = 0
+		 $btn = MsgBox($MB_RETRYCANCEL,"Error","Unable to find : Lindo, make sure you launched it & press OK")
+		 If $btn = 1 Then
+			info("Unable to find the game.")
+			FreshStart()
+		 ElseIf $btn = 2 Then
+			ExitScript()
+		 EndIf
+
+	  Case $focus = 0
+		 WinActivate($lindo)
+		 If 0 Then info("Unable to give Lindo the focus")
+
+	  Case $state <> 32
+		 WinSetState($lindo, "", @SW_MAXIMIZE)
+   EndSelect
+
+   RestrictionCheck()
+EndFunc
+
+Func RestrictionCheck()
+   ;TODO (HoPollo) : Restric to positive numbers only
+   If $Pa < $cost Or $Pa <= 0 Or $Pm <= 0 Or $Po <= 0 Or $cost <= 0 Then
 	  MsgBox(0, "Error", "Wrong number around Pa/Pm/Atk/Po")
-	  If 1 Then FreshStart()
+	  FreshStart()
    Else
 	  If $debugMode Then debug("Debug mode : ON")
 	  If $debugMode Then debug("Sleeps time :" & $sleep & "ms")
 	  If Not $debugMode Then info("Steps :" & $sleep & "ms")
-
-	  Start()
    EndIf
+
+   Start()
 EndFunc
 
 Func Start()
@@ -340,10 +364,8 @@ Func EndTurn()
 EndFunc
 
 Func ClosePopup()
-   ; TODO (HoPollo): Add left side notif detection
    debug("Popup detected")
 
-;~    $cross = PixelSearch(71, 36, 1155, 737, $crossPopupColor)
    $cross = _ImageSearch($popupCross)
    If IsArray($cross) Then
 	  MouseClick("", $cross[0], $cross[1])
@@ -353,7 +375,6 @@ Func ClosePopup()
 EndFunc
 
 Func ClaimSucces()
-   ;TODO (HoPollo) : Implement succes claiming feature
    debug("Succes detected")
    $claimed = False
    Sleep($sleep)
@@ -397,8 +418,8 @@ Func Regen()
 EndFunc
 
 Func ExitScript()
-   info("Closing program.")
-   Sleep($sleep)
+   info($reason)
+   Sleep($sleep + 1000)
 
    Exit
 EndFunc
