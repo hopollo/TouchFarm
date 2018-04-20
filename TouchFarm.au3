@@ -21,6 +21,7 @@
 
 Global $targetImage[] = ["target1.png","target2.png","target3.png"]
 Global $sort = "spell.png"
+Global $popupCross = "close.png"
 Global $succes[] = ["claim1.png","claim2.png"]
 
 Global $meColor = 0x689B00
@@ -342,9 +343,9 @@ Func ClosePopup()
    ; TODO (HoPollo): Add left side notif detection
    debug("Popup detected")
 
-   $cross = PixelSearch(71, 36, 1155, 737, $crossPopupColor)
-
-   If Not @error Then
+;~    $cross = PixelSearch(71, 36, 1155, 737, $crossPopupColor)
+   $cross = _ImageSearch($popupCross)
+   If IsArray($cross) Then
 	  MouseClick("", $cross[0], $cross[1])
    EndIf
 
@@ -374,27 +375,23 @@ Func Regen()
    info("Healing...")
    ;TODO (HoPollo) : Maybe replace all mouseclick by imagesearch for better accuracy/detection ?
 
-   Do
+   Local $regen1 = _ImageSearch("regen1.png")
+   If 1 Then MouseClick("",$regen1[0], $regen1[1])
+
+   Sleep($sleep)
+
+   $emote1 = PixelGetColor(1125, 735) ; Poeple icon
+   If $emote1 = 0xBADF2F Then
+	  MouseClick("", 1125, 735)
 	  Sleep($sleep)
 
-	  Local $regen1 = _ImageSearch("regen1.png")
-	  If 1 Then
-		 MouseClick("",$regen1[0], $regen1[1])
+	  $emote2 = PixelGetColor(578, 685) ; Chair icon
+	  if $emote2 = 0x50321F Then
+		 MouseClick("", 578, 685)
 	  EndIf
 
-	  $emote1 = PixelGetColor(1125, 735) ; Poeple icon
-	  If $emote1 = 0xBADF2F Then
-		 MouseClick("", 1125, 735)
-		 Sleep($sleep)
-
-		 $emote2 = PixelGetColor(578, 685) ; Chair icon
-		 if $emote2 = 0x50321F Then
-			MouseClick("", 578, 685)
-		 EndIf
-		 $healing = True
-	  EndIf
-
-   Until $healing
+	  $healing = True
+   EndIf
 
    Start()
 EndFunc
