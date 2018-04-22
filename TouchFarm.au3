@@ -20,36 +20,43 @@
 #include <ImageSearch.au3>
 #include <GuiEdit.au3>
 
-Global $imageUrl = "imgs/"
+Global $config = "config.ini"
+
+Global $imageUrl = IniRead($config, "basic", "Image_Folder", "")
 Global $targetImage[] = ["target1.png","target2.png","target3.png"]
-Global $spell = $imageUrl & "spell.png"
-Global $closeBtn = $imageUrl & "close.png"
-Global $readyBtn = $imageUrl & "readyBtn.png"
-Global $endTurnBtn = $imageUrl & "endTurnBtn.png"
+Global $spell = IniRead($config, "settings", "Button_Spell", $imageUrl & "")
+Global $closeBtn = IniRead($config, "settings", "Button_Close", $imageUrl & "")
+Global $readyBtn = IniRead($config, "settings", "Button_Ready", $imageUrl & "")
+Global $endTurnBtn = IniRead($config, "settings", "Button_Pass", $imageUrl & "")
 Global $succes[] = ["claim1.png","claim2.png"]
 
-Global $meColor = 0x689B00
-Global $enemyColor = 0x808090
-Global $popupColor = 0x2E2D28
+Global $meColor = IniRead($config, "settings", "Color_Player", 0x689B00)
+Global $enemyColor = IniRead($config, "settings", "Color_Enemy", 0x808090)
+Global $popupColor = IniRead($config, "settings", "Color_Popup", 0x2E2D28)
 
 Global $healing = False
 Global $specLock = False
-Global $boostStats = True
+Global $boostStats = IniRead($config, "settings", "Boost_Stats", False)
 
-Global $debugMode = True
-Global $sleep = 250
+Global $debugMode = IniRead($config, "basic", "Debug_Mode", False)
+Global $nbrDePa = IniRead($config, "gameplay", "Max_Pa", 6)
+Global $nbrDePm = IniRead($config, "gameplay", "Max_Pm", 3)
+Global $nbrDePo = IniRead($config, "gameplay", "Max_Po", 6)
+Global $nbrDeCout = IniRead($config, "gameplay", "Cost_Per_Hit", 3)
+
+Global $sleep = IniRead($config, "basic", "Timer", 250)
 
 Global $barTurnState = 0xFFE348
 Global $spellAvailableState = 0x92300B
 
 Global $crossPopupColor = 0x4B5C07
-Global $fullHp = 0xDA6D62
-Global $lowHp = 0x968E7C
+Global $fullHp = IniRead($config, "settings", "Color_Full_Hp", 0xDA6D62)
+Global $lowHp = IniRead($config, "settings", "Color_Low_Hp", 0x968E7C)
 
-Global $mapMaxLeft = 71
-Global $mapMaxTop = 36
-Global $mapMaxRight = 1155
-Global $mapMaxBottom = 737
+Global $mapMaxLeft = IniRead($config, "settings", "Game_Map_Max_Left", 71)
+Global $mapMaxTop = IniRead($config, "settings", "Game_Map_Max_Top", 36)
+Global $mapMaxRight = IniRead($config, "settings", "Game_Map_Max_Right", 1155)
+Global $mapMaxBottom = IniRead($config, "settings", "Game_Map_Max_Bottom", 737)
 
 ;Global $mapMax[] = [$mapMaxLeft, $mapMaxRight, $mapMaxTop, $mapMaxBottom]
 
@@ -65,27 +72,18 @@ GUICtrlSetState(-1, $GUI_DISABLE)
 GUICtrlSetCursor (-1, 2)
 $GUI_EVENT_START = GUICtrlCreateButton("Start", 56, 240, 75, 25)
 GUICtrlCreateLabel("PA | PM", 9, 209, 50)
-$GUI_EVENT_PA = GUICtrlCreateInput("6", 10, 222, 15, 16)
-$GUI_EVENT_PM = GUICtrlCreateInput("3", 30, 222, 15, 16)
+$GUI_EVENT_PA = GUICtrlCreateInput($nbrDePa, 10, 222, 15, 16)
+$GUI_EVENT_PM = GUICtrlCreateInput($nbrDePm, 30, 222, 15, 16)
 GUICtrlCreateLabel("ATK | PO", 2, 238, 50)
-$GUI_EVENT_ATK = GUICtrlCreateInput("3", 10, 251, 15, 16)
-$GUI_EVENT_PO = GUICtrlCreateInput("7", 30, 251, 15, 16)
+$GUI_EVENT_ATK = GUICtrlCreateInput($nbrDeCout, 10, 251, 15, 16)
+$GUI_EVENT_PO = GUICtrlCreateInput($nbrDePo, 30, 251, 15, 16)
 Opt("GUICoordMode", 2)
 GUISetCoord(1153, 231)
+GUICtrlSetState($GUI_EVENT_PA, 128)
+GUICtrlSetState($GUI_EVENT_PM, 128)
+GUICtrlSetState($GUI_EVENT_ATK, 128)
+GUICtrlSetState($GUI_EVENT_PO, 128)
 GUISetState(@SW_SHOW)
-
-Func FreshStart()
-   Sleep(100)
-
-   GUICtrlSetData($GUI_EVENT_START, "Start")
-   GUICtrlSetState($GUI_EVENT_START, 64)
-   GUICtrlSetState($GUI_EVENT_PA, 64)
-   GUICtrlSetState($GUI_EVENT_PM, 64)
-   GUICtrlSetState($GUI_EVENT_ATK, 64)
-   GUICtrlSetState($GUI_EVENT_PO, 64)
-
-   Requierments()
-EndFunc
 
 While 1
    $nMsg = GUIGetMsg()
@@ -94,14 +92,18 @@ While 1
 		 ExitScript()
 	  Case $GUI_EVENT_START
 		 GUICtrlSetData($GUI_EVENT_START, "ESC = exit")
-		 GUICtrlSetState($GUI_EVENT_START, 128)
-		 GUICtrlSetState($GUI_EVENT_PA, 128)
-		 GUICtrlSetState($GUI_EVENT_PM, 128)
-		 GUICtrlSetState($GUI_EVENT_ATK, 128)
-		 GUICtrlSetState($GUI_EVENT_PO, 128)
+
 		 Requierments()
    EndSwitch
 WEnd
+
+Func FreshStart()
+   Sleep(100)
+
+   GUICtrlSetData($GUI_EVENT_START, "Start")
+
+   Requierments()
+EndFunc
 
 Func info($messageJournal, $autresInfos = "")
    GUICtrlSetData($journal, GUICtrlRead($journal) & @CRLF & $messageJournal)
@@ -126,15 +128,18 @@ Func Requierments()
    Global $Pm = GUICtrlRead($GUI_EVENT_PM)
    Global $Po = GUICtrlRead($GUI_EVENT_PO)
 
+   $file = FileExists($config)
    $process = ProcessExists("Lindo.exe")
    $lindo = "[TITLE:Lindo]"
    $focus = WinActive($lindo)
    $state = WinGetState($lindo)
 
    Select
+	  Case $file = 0
+		 MsgBox(0,"Fatal error","Unable to reach config.ini, make sure it's in the main folder")
 	  Case $process = 0
 		 $btn = MsgBox($MB_RETRYCANCEL,"Error","Unable to find : Lindo, make sure you launched it & press OK")
-		 If $btn = 1 Then
+		 If $btn = 4 Then
 			info("Unable to find the game.")
 			FreshStart()
 		 ElseIf $btn = 2 Then
@@ -355,7 +360,7 @@ Func ClosePopup()
    debug("Popup detected")
 
    $cross = _ImageSearch($closeBtn)
-   If IsArray($cross) Then MouseClick("", $cross[0], $cross[1])
+   If Not @error Then MouseClick("", $cross[0], $cross[1])
 
    Start()
 EndFunc
@@ -369,7 +374,7 @@ Func ClaimSucces()
 
    Do
 	  Local $claimBtn = _ImageSearch($succes[1])
-	  If IsArray($claimBtn) Then
+	  If Not @error Then
 		 MouseClick("", $claimBtn[0], $claimBtn[1])
 		 Sleep($sleep) ; important to wait a bit or the close popup will close it instantly
 		 $claimed = True
@@ -383,7 +388,7 @@ Func Regen()
    info("Healing...")
    ;TODO (HoPollo) : Maybe replace all mouseclick by imagesearch for better accuracy/detection ?
    Local $regen1 = _ImageSearch("regen1.png")
-   If IsArray($regen1) Then MouseClick("",$regen1[0], $regen1[1])
+   If Not @error Then MouseClick("",$regen1[0], $regen1[1])
 
    Sleep($sleep)
 
