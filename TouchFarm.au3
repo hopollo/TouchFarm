@@ -26,33 +26,32 @@ Global $config = "config.ini"
 
 Global $imageUrl = IniRead($config, "basic", "Image_Folder", "")
 Global $targetUrl = IniRead($config, "basic", "Target_Folder", "")
+
+Global $debugMode = IniRead($config, "basic", "Debug_Mode", False)
+
+;TODO(HoPollo) : Remove this after finish implement new target search system
 Global $targetImage[] = ["target1.png","target2.png","target3.png"]
+Global $succes[] = ["claim1.png","claim2.png"]
+
 Global $spell = IniRead($config, "settings", "Button_Spell", $imageUrl & "")
 Global $closeBtn = IniRead($config, "settings", "Button_Close", $imageUrl & "")
 Global $readyBtn = IniRead($config, "settings", "Button_Ready", $imageUrl & "")
 Global $endTurnBtn = IniRead($config, "settings", "Button_Pass", $imageUrl & "")
-Global $succes[] = ["claim1.png","claim2.png"]
+
 
 Global $meColor = IniRead($config, "settings", "Color_Player", 0x689B00)
 Global $enemyColor = IniRead($config, "settings", "Color_Enemy", 0x808090)
 Global $popupColor = IniRead($config, "settings", "Color_Popup", 0x2E2D28)
 
-Global $healing = False
-Global $specLock = False
+Global $sleep = IniRead($config, "basic", "Timer", 250)
 Global $boostStats = IniRead($config, "settings", "Boost_Stats", False)
 
-Global $debugMode = IniRead($config, "basic", "Debug_Mode", False)
 Global $nbrDePa = IniRead($config, "gameplay", "Max_Pa", 6)
 Global $nbrDePm = IniRead($config, "gameplay", "Max_Pm", 3)
 Global $nbrDePo = IniRead($config, "gameplay", "Max_Po", 6)
 Global $nbrDeCout = IniRead($config, "gameplay", "Cost_Per_Hit", 3)
 
-Global $sleep = IniRead($config, "basic", "Timer", 250)
-
 Global $barTurnState = 0xFFE348
-Global $spellAvailableState = 0x92300B
-
-Global $crossPopupColor = 0x4B5C07
 Global $fullHp = IniRead($config, "settings", "Color_Full_Hp", 0xDA6D62)
 Global $lowHp = IniRead($config, "settings", "Color_Low_Hp", 0x968E7C)
 
@@ -61,6 +60,8 @@ Global $mapMaxTop = IniRead($config, "settings", "Game_Map_Max_Top", 36)
 Global $mapMaxRight = IniRead($config, "settings", "Game_Map_Max_Right", 1155)
 Global $mapMaxBottom = IniRead($config, "settings", "Game_Map_Max_Bottom", 737)
 
+Global $healing = False
+Global $specLock = False
 ;Global $mapMax[] = [$mapMaxLeft, $mapMaxRight, $mapMaxTop, $mapMaxBottom]
 
 Global $reason = "Thanks for using this program, see you next time."
@@ -131,6 +132,8 @@ Func Requierments()
    Global $Pm = GUICtrlRead($GUI_EVENT_PM)
    Global $Po = GUICtrlRead($GUI_EVENT_PO)
 
+
+   ;TODO (HoPollo) : Add dir check requierments maybe ?
    $file = FileExists($config)
    $process = ProcessExists("Lindo.exe")
    $lindo = "[TITLE:Lindo]"
