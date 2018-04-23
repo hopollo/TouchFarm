@@ -12,7 +12,9 @@
 #include <ButtonConstants.au3>
 #include <EditConstants.au3>
 #include <GUIConstantsEx.au3>
-#include <ProgressConstants.au3>
+#include <File.au3>
+#include <Array.au3>
+#include <WinAPIFiles.au3>
 #include <StaticConstants.au3>
 #include <WindowsConstants.au3>
 #include <ScrollBarsConstants.au3>
@@ -23,6 +25,7 @@
 Global $config = "config.ini"
 
 Global $imageUrl = IniRead($config, "basic", "Image_Folder", "")
+Global $targetUrl = IniRead($config, "basic", "Target_Folder", "")
 Global $targetImage[] = ["target1.png","target2.png","target3.png"]
 Global $spell = IniRead($config, "settings", "Button_Spell", $imageUrl & "")
 Global $closeBtn = IniRead($config, "settings", "Button_Close", $imageUrl & "")
@@ -179,6 +182,7 @@ Func Start()
 	  Global $2 = PixelSearch($mapMaxLeft, $mapMaxTop, $mapMaxRight, $mapMaxBottom, $meColor, 2)
 
 	  ; ISSUE : Detection from image is very bad
+	  ; TODO (HoPollo) : Remove all this part to implement the new fileread info about targets
 	  Local $randomImageOfTarget = Random(0, UBound($targetImage)-1, 1)
 	  Global $3 = _ImageSearch($imageUrl & $targetImage[$randomImageOfTarget], 100, 0)
 	  debug("Scan : " & $targetImage[$randomImageOfTarget] & " -> " & $3)
@@ -208,6 +212,19 @@ Func Start()
 		 BoostStats()
 	  EndIf
    WEnd
+EndFunc
+
+Func ChoosenTargets()
+   Global $targetInfo = _FileListToArrayRec($targetUrl, "*", $FLTAR_FILES, $FLTAR_NORECUR, $FLTAR_SORT)
+   If @error Then
+	  info("Error : Unable to open target dir")
+   Else
+	  ConsoleWrite("Found : " & $targetInfo[0] & " ")
+	  For $i = 1 To $targetInfo[0]
+		 info("Current targets :" & @CRLF)
+		 info($targetInfo[$i] & @CRLF)
+	  Next
+   EndIf
 EndFunc
 
 Func RunAround()
