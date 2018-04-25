@@ -220,13 +220,34 @@ EndFunc
 Func ChoosenTargets()
    Global $targetInfo = _FileListToArrayRec($targetUrl, "*", $FLTAR_FILES, $FLTAR_NORECUR, $FLTAR_SORT)
    If @error Then
-	  info("Error : Unable to open target dir")
+	  ConsoleWrite("Error : Unable to open target dir")
    Else
-	  ConsoleWrite("Found : " & $targetInfo[0] & " ")
+	  Dim $foo[0]
+
+	  debug("Found : " & $targetInfo[0] & @CRLF)
+	  info("Current targets :" & @CRLF)
+
 	  For $i = 1 To $targetInfo[0]
-		 info("Current targets :" & @CRLF)
-		 info($targetInfo[$i] & @CRLF)
+		 ConsoleWrite($targetInfo[$i] & @CRLF)
+		 _ArrayAdd($foo, $targetInfo[$i])
 	  Next
+
+	  Global $selectedTarget = Random(0, UBound($foo)-1, 1)
+	  info("Choosen : " & $foo[$selectedTarget] & @CRLF)
+	  $read = IniRead($targetUrl & $foo[$selectedTarget], "basic", "colors","")
+	  debug("Read -> " & $read & @CRLF)
+
+	  Dim $pixels[0]
+	  _ArrayAdd($pixels, $read)
+	  $rdm = Random(0, Ubound($pixels) - 1, 1)
+	  ;Code by Theo
+	  Local $pixelString = $pixels[$rdm]
+	  Local $splitArr = StringSplit($pixelString, ", ")
+
+	  Local $randItem = Random(1, UBound($splitArr) - 1)
+	  debug("Pxl : " & $splitArr[$randItem] & @CRLF)
+
+	  ; Todo (HoPollo) : add the pixelsearch with $splitArr[$randItem]
    EndIf
 EndFunc
 
