@@ -29,8 +29,6 @@ Global $targetUrl = IniRead($config, "basic", "Target_Folder", "")
 
 Global $debugMode = IniRead($config, "basic", "Debug_Mode", False)
 
-;TODO(HoPollo) : Remove this after finish implement new target search system
-Global $targetImage[] = ["target1.png","target2.png","target3.png"]
 Global $succes[] = ["claim1.png","claim2.png"]
 
 Global $spell = IniRead($config, "settings", "Button_Spell", $imageUrl & "")
@@ -177,47 +175,7 @@ Func RestrictionCheck()
    Start()
 EndFunc
 
-Func Start()
-   info("Searching...")
-   While 1
-
-	  Global $1 = PixelSearch($mapMaxLeft, $mapMaxTop, $mapMaxRight, $mapMaxBottom, $enemyColor, 2)
-	  Global $2 = PixelSearch($mapMaxLeft, $mapMaxTop, $mapMaxRight, $mapMaxBottom, $meColor, 2)
-
-	  ; ISSUE : Detection from image is very bad
-	  ; TODO (HoPollo) : Remove all this part to implement the new fileread info about targets
-	  Local $randomImageOfTarget = Random(0, UBound($targetImage)-1, 1)
-	  Global $3 = _ImageSearch($imageUrl & $targetImage[$randomImageOfTarget], 100, 0)
-	  debug("Scan : " & $targetImage[$randomImageOfTarget] & " -> " & $3)
-
-	  Global $4 = PixelGetColor(1177, 59) ; HealthColor(middle)
-
-	  Global $5 = _ImageSearch($closeBtn)
-	  Global $8 = PixelGetColor(1357, 585) ; Turn Bar(start from bottom)
-	  Global $9 = _ImageSearch($imageUrl & $succes[0])
-	  Global $10 = PixelGetColor(1211, 552)
-
-	  If IsArray($1) And IsArray($2) And $8 = 0xFFE348 Then
-		 Positionning()
-	  ElseIf IsArray($3) Then
-         AttackTarget()
-	  ElseIf $4 = $lowHp And $healing = False Then
-		 Regen()
-	  ElseIf $4 = $fullHp Then
-		 RunAround()
-	  ElseIf IsArray($5) Then
-		 ClosePopup()
-	  ElseIf $8 = 0x1FDDDD Then
-		 Start()
-	  ElseIf IsArray($9) Then
-		 ClaimSucces()
-	  ElseIf $10 = 0xC6F152 And $boostStats = True Then
-		 BoostStats()
-	  EndIf
-   WEnd
-EndFunc
-
-Func ChoosenTargets()
+Func ReadTargets()
    Global $targetInfo = _FileListToArrayRec($targetUrl, "*", $FLTAR_FILES, $FLTAR_NORECUR, $FLTAR_SORT)
    If @error Then
 	  ConsoleWrite("Error : Unable to open target dir")
@@ -251,6 +209,49 @@ Func ChoosenTargets()
    EndIf
 EndFunc
 
+Func Start()
+   info("Searching...")
+   While 1
+
+	  Global $1 = PixelSearch($mapMaxLeft, $mapMaxTop, $mapMaxRight, $mapMaxBottom, $enemyColor, 2)
+	  Global $2 = PixelSearch($mapMaxLeft, $mapMaxTop, $mapMaxRight, $mapMaxBottom, $meColor, 2)
+
+	  For $a = 1 To $splitArr[0]
+		 Local $nextColor = $splitArr[$a]
+		 debug("Color : " & $nextColor & @CRLF)
+		 Global $monster = PixelSearch($mapMaxLeft, $mapMaxTop, $mapMaxRight, $mapMaxBottom, $nextColor)
+		 If Not @error Then AttackTarget()
+	  Next
+
+	  Global $4 = PixelGetColor(1177, 59) ; HealthColor(middle)
+
+	  Global $5 = _ImageSearch($closeBtn)
+	  Global $8 = PixelGetColor(1357, 585) ; Turn Bar(start from bottom)
+	  Global $9 = _ImageSearch($imageUrl & $succes[0])
+	  Global $10 = PixelGetColor(1211, 552)
+
+	  If IsArray($1) And IsArray($2) And $8 = 0xFFE348 Then
+		 Positionning()
+	  ElseIf IsArray($3) Then
+         AttackTarget()
+	  ElseIf $4 = $lowHp And $healing = False Then
+		 Regen()
+	  ElseIf $4 = $fullHp Then
+		 RunAround()
+	  ElseIf IsArray($5) Then
+		 ClosePopup()
+	  ElseIf $8 = 0x1FDDDD Then
+		 Start()
+	  ElseIf IsArray($9) Then
+		 ClaimSucces()
+	  ElseIf $10 = 0xC6F152 And $boostStats = True Then
+		 BoostStats()
+	  EndIf
+   WEnd
+EndFunc
+
+
+
 Func RunAround()
    info("Running to find...")
    Sleep(250)
@@ -266,7 +267,7 @@ Func AttackTarget()
    info("Fight incoming...")
    Sleep($sleep)
 
-   MouseClick("", $3[0], $3[1], 2, 30)
+   MouseClick("", $monster[0], $monster[1], 2, 20)
 
    Start()
 EndFunc
