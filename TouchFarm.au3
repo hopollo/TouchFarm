@@ -36,7 +36,6 @@ Global $closeBtn = IniRead($config, "settings", "Button_Close", $imageUrl & "")
 Global $readyBtn = IniRead($config, "settings", "Button_Ready", $imageUrl & "")
 Global $endTurnBtn = IniRead($config, "settings", "Button_Pass", $imageUrl & "")
 
-
 Global $meColor = IniRead($config, "settings", "Color_Player", 0x689B00)
 Global $enemyColor = IniRead($config, "settings", "Color_Enemy", 0x808090)
 Global $popupColor = IniRead($config, "settings", "Color_Popup", 0x2E2D28)
@@ -158,7 +157,7 @@ Func Requierments()
 		 WinSetState($lindo, "", @SW_MAXIMIZE)
    EndSelect
 
-   RestrictionCheck()
+  RestrictionCheck()
 EndFunc
 
 Func RestrictionCheck()
@@ -172,56 +171,58 @@ Func RestrictionCheck()
 	  If Not $debugMode Then info("Steps :" & $sleep & "ms")
    EndIf
 
-   Start()
+   ReadTargets()
 EndFunc
 
 Func ReadTargets()
+
    Global $targetInfo = _FileListToArrayRec($targetUrl, "*", $FLTAR_FILES, $FLTAR_NORECUR, $FLTAR_SORT)
    If @error Then
-	  ConsoleWrite("Error : Unable to open target dir")
-   Else
-	  Dim $foo[0]
-
-	  debug("Found : " & $targetInfo[0] & @CRLF)
-	  info("Current targets :" & @CRLF)
-
-	  For $i = 1 To $targetInfo[0]
-		 ConsoleWrite($targetInfo[$i] & @CRLF)
-		 _ArrayAdd($foo, $targetInfo[$i])
-	  Next
-
-	  Global $selectedTarget = Random(0, UBound($foo)-1, 1)
-	  info("Choosen : " & $foo[$selectedTarget] & @CRLF)
-	  $read = IniRead($targetUrl & $foo[$selectedTarget], "basic", "colors","")
-	  debug("Read -> " & $read & @CRLF)
-
-	  Dim $pixels[0]
-	  _ArrayAdd($pixels, $read)
-	  $rdm = Random(0, Ubound($pixels) - 1, 1)
-	  ;Code by Theo
-	  Local $pixelString = $pixels[$rdm]
-	  Global $splitArr = StringSplit($pixelString, ", ")
+	  info("Unable to retrieve target info from config files")
+	  FreshStart()
    EndIf
+
+   Dim $foo[0]
+
+   debug("Found : " & $targetInfo[0] & @CRLF)
+   info("Current targets :" & @CRLF)
+
+   For $i = 1 To $targetInfo[0]
+	  info($targetInfo[$i] & @CRLF)
+	  _ArrayAdd($foo, $targetInfo[$i])
+   Next
+
+   Global $selectedTarget = Random(0, UBound($foo)-1, 1)
+   info("Choosen : " & $foo[$selectedTarget] & @CRLF)
+   $read = IniRead($targetUrl & $foo[$selectedTarget], "basic", "colors","")
+   debug("Read -> " & $read & @CRLF)
+
+   Dim $pixels[0]
+   _ArrayAdd($pixels, $read)
+   $rdm = Random(0, Ubound($pixels) - 1, 1)
+   ;Code by Theo
+   Local $pixelString = $pixels[$rdm]
+   Global $splitArr = StringSplit($pixelString, ", ")
+
+   Start()
 EndFunc
 
 Func Start()
    info("Searching...")
    While 1
-
 	  Global $1 = PixelSearch($mapMaxLeft, $mapMaxTop, $mapMaxRight, $mapMaxBottom, $enemyColor, 2)
 	  Global $2 = PixelSearch($mapMaxLeft, $mapMaxTop, $mapMaxRight, $mapMaxBottom, $meColor, 2)
+	  Global $8 = PixelGetColor(1357, 585) ; Turn Bar(start from bottom)
 
 	  For $a = 1 To $splitArr[0]
 		 Local $nextColor = $splitArr[$a]
-		 debug("Color : " & $nextColor & @CRLF)
-		 Global $monster = PixelSearch($mapMaxLeft, $mapMaxTop, $mapMaxRight, $mapMaxBottom, $nextColor)
-		 If Not @error Then AttackTarget()
+		 Global $monster = PixelSearch($mapMaxLeft, $mapMaxTop, $mapMaxRight, $mapMaxBottom, $nextColor, 1)
 	  Next
 
 	  Global $4 = PixelGetColor(1177, 59) ; HealthColor(middle)
 
 	  Global $5 = _ImageSearch($closeBtn)
-	  Global $8 = PixelGetColor(1357, 585) ; Turn Bar(start from bottom)
+
 	  Global $9 = _ImageSearch($imageUrl & $succes[0])
 	  Global $10 = PixelGetColor(1211, 552)
 
@@ -239,11 +240,11 @@ Func Start()
 		 ClaimSucces()
 	  ElseIf $10 = 0xC6F152 And $boostStats = True Then
 		 BoostStats()
+	  ElseIf IsArray($monster) Then
+		 AttackTarget()
 	  EndIf
    WEnd
 EndFunc
-
-
 
 Func RunAround()
    info("Running to find...")
@@ -260,7 +261,7 @@ Func AttackTarget()
    info("Fight incoming...")
    Sleep($sleep)
 
-   MouseClick("", $monster[0], $monster[1], 2, 20)
+   MouseClick("", $monster[0], $monster[1], 2, 15)
 
    Start()
 EndFunc
