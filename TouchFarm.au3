@@ -31,10 +31,10 @@ Global $debugMode = IniRead($config, "basic", "Debug_Mode", False)
 
 Global $succes[] = ["claim1.png","claim2.png"]
 
-Global $spell = IniRead($config, "settings", "Button_Spell", $imageUrl & "")
-Global $closeBtn = IniRead($config, "settings", "Button_Close", $imageUrl & "")
-Global $readyBtn = IniRead($config, "settings", "Button_Ready", $imageUrl & "")
-Global $endTurnBtn = IniRead($config, "settings", "Button_Pass", $imageUrl & "")
+Global $spell = IniRead($config, "settings", "Button_Spell", "")
+Global $closeBtn = IniRead($config, "settings", "Button_Close", "")
+Global $readyBtn = IniRead($config, "settings", "Button_Ready", "")
+Global $endTurnBtn = IniRead($config, "settings", "Button_Pass", "")
 
 Global $meColor = IniRead($config, "settings", "Color_Player", 0x689B00)
 Global $enemyColor = IniRead($config, "settings", "Color_Enemy", 0x808090)
@@ -221,7 +221,7 @@ Func Start()
 
 	  Global $4 = PixelGetColor(1177, 59) ; HealthColor(middle)
 
-	  Global $5 = _ImageSearch($closeBtn)
+	  Global $5 = _ImageSearch($imageUrl & $closeBtn)
 
 	  Global $9 = _ImageSearch($imageUrl & $succes[0])
 	  Global $10 = PixelGetColor(1211, 552)
@@ -273,8 +273,8 @@ Func Positionning()
    $healing = False
    Sleep($sleep)
 
-   Local $ready = _ImageSearch($readyBtn)
-   Local $endTurn = _ImageSearch($endTurnBtn)
+   Local $ready = _ImageSearch($imageUrl & $readyBtn)
+   Local $endTurn = _ImageSearch($imageUrl & $endTurnBtn)
 
    If IsArray($ready) Then
 	  debug("Rdy Btn founded")
@@ -293,7 +293,7 @@ Func CombatSettings()
 
 ;~    MouseClick("", 1168, 94) ; Develop top menu slider
 
-;~    $lock = _ImageSearch("specBtn.png")
+;~    $lock = _ImageSearch($imageUrl & $specBtn)
 ;~    Sleep(250)
 ;~    If IsArray($lock) Then
 ;~ 	  MouseClick("", $lock[0], $lock[1])
@@ -341,7 +341,7 @@ Func SearchingCoord()
    Sleep($sleep)
 
    $bar = PixelGetColor(1358, 584) ;check if it's his turn to play
-   $spellState = _ImageSearch($spell) ;check if main spell available state
+   $spellState = _ImageSearch($imageUrl & $spell) ;check if main spell available state
 
    If $bar = $barTurnState And IsArray($spellState) Then
 	  debug("Turn started + Spell available")
@@ -386,7 +386,7 @@ Func EndTurn()
 
    Sleep($sleep)
 
-   Local $result = _ImageSearch($endTurnBtn)
+   Local $result = _ImageSearch($imageUrl & $endTurnBtn)
    If IsArray($result) Then MouseClick("", $result[0], $result[1])
 
    SearchingCoord()
@@ -395,7 +395,7 @@ EndFunc
 Func ClosePopup()
    debug("Popup detected")
 
-   $cross = _ImageSearch($closeBtn)
+   $cross = _ImageSearch($imageUrl & $closeBtn)
    If Not @error Then MouseClick("", $cross[0], $cross[1])
 
    Start()
@@ -409,7 +409,7 @@ Func ClaimSucces()
    MouseClick("", $9[0], $9[1])
 
    Do
-	  Local $claimBtn = _ImageSearch($succes[1])
+	  Local $claimBtn = _ImageSearch($imageUrl & $succes[1])
 	  If Not @error Then
 		 MouseClick("", $claimBtn[0], $claimBtn[1])
 		 Sleep($sleep) ; important to wait a bit or the close popup will close it instantly
@@ -423,7 +423,7 @@ EndFunc
 Func Regen()
    info("Healing...")
    ;TODO (HoPollo) : Maybe replace all mouseclick by imagesearch for better accuracy/detection ?
-   Local $regen1 = _ImageSearch("regen1.png")
+   Local $regen1 = _ImageSearch($imageUrl & "regen1.png")
    If Not @error Then MouseClick("",$regen1[0], $regen1[1])
 
    Sleep($sleep)
