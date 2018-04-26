@@ -200,12 +200,7 @@ Func ReadTargets()
 	  $rdm = Random(0, Ubound($pixels) - 1, 1)
 	  ;Code by Theo
 	  Local $pixelString = $pixels[$rdm]
-	  Local $splitArr = StringSplit($pixelString, ", ")
-
-	  Local $randItem = Random(1, UBound($splitArr) - 1)
-	  debug("Pxl : " & $splitArr[$randItem] & @CRLF)
-
-	  ; Todo (HoPollo) : add the pixelsearch with $splitArr[$randItem]
+	  Global $splitArr = StringSplit($pixelString, ", ")
    EndIf
 EndFunc
 
@@ -232,8 +227,6 @@ Func Start()
 
 	  If IsArray($1) And IsArray($2) And $8 = 0xFFE348 Then
 		 Positionning()
-	  ElseIf IsArray($3) Then
-         AttackTarget()
 	  ElseIf $4 = $lowHp And $healing = False Then
 		 Regen()
 	  ElseIf $4 = $fullHp Then
