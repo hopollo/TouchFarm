@@ -21,6 +21,7 @@
 #include <MsgBoxConstants.au3>
 #include <ImageSearch.au3>
 #include <GuiEdit.au3>
+#include <StaticConstants.au3>
 
 Global $config = "config.ini"
 
@@ -35,6 +36,7 @@ Global $spell = IniRead($config, "settings", "Button_Spell", "")
 Global $closeBtn = IniRead($config, "settings", "Button_Close", "")
 Global $readyBtn = IniRead($config, "settings", "Button_Ready", "")
 Global $endTurnBtn = IniRead($config, "settings", "Button_Pass", "")
+Global $specBtn = IniRead($config, "settings", "Button_Spectate", "")
 
 Global $meColor = IniRead($config, "settings", "Color_Player", 0x689B00)
 Global $enemyColor = IniRead($config, "settings", "Color_Enemy", 0x808090)
@@ -59,12 +61,14 @@ Global $mapMaxBottom = IniRead($config, "settings", "Game_Map_Max_Bottom", 737)
 
 Global $healing = False
 Global $specLock = False
+
 ;Global $mapMax[] = [$mapMaxLeft, $mapMaxRight, $mapMaxTop, $mapMaxBottom]
 
 Global $reason = "Thanks for using this program, see you next time."
 
 HotKeySet ("{ESC}","ExitScript")
 
+#Region ### START Main GUI ###
 Global $Form1 = GUICreate("TouchFarm", 197, 268, 192, 124)
 WinSetOnTop($Form1, "", 1)
 Global $journal = GUICtrlCreateEdit("", 0, 0, 196, 209, BitOR($ES_AUTOVSCROLL,$ES_READONLY,$WS_VSCROLL))
@@ -72,6 +76,11 @@ GUICtrlSetData(-1, "")
 GUICtrlSetState(-1, $GUI_DISABLE)
 GUICtrlSetCursor (-1, 2)
 $GUI_EVENT_START = GUICtrlCreateButton("Start", 56, 240, 75, 25)
+GUICtrlSetFont(-1, 8, 800, 0, "MS Sans Serif")
+GUICtrlSetBkColor(-1, 0x008080)
+$GUI_EVENT_TARGET = GUICtrlCreateButton("+", 170, 240, 25, 25)
+GUICtrlSetFont(-1, 8, 800, 0, "MS Sans Serif")
+GUICtrlSetBkColor(-1, 0x008080)
 GUICtrlCreateLabel("PA | PM", 9, 209, 50)
 $GUI_EVENT_PA = GUICtrlCreateInput($nbrDePa, 10, 222, 15, 16)
 $GUI_EVENT_PM = GUICtrlCreateInput($nbrDePm, 30, 222, 15, 16)
@@ -85,6 +94,20 @@ GUICtrlSetState($GUI_EVENT_PM, 128)
 GUICtrlSetState($GUI_EVENT_ATK, 128)
 GUICtrlSetState($GUI_EVENT_PO, 128)
 GUISetState(@SW_SHOW)
+#EndRegion ### END Main GUI ###
+
+#Region ### START Target GUI ###
+$Form2 = GUICreate("Form1", 192, 233, 192, 124)
+$Close = GUICtrlCreateButton("Close", 8, 208, 171, 17)
+GUICtrlSetFont(-1, 8, 800, 0, "MS Sans Serif")
+GUICtrlSetBkColor(-1, 0x008080)
+GUICtrlSetCursor (-1, 0)
+$Available = GUICtrlCreateLabel("Available", 24, 8, 47, 17)
+$Current = GUICtrlCreateLabel("Current", 128, 8, 38, 17)
+GUICtrlCreateGroup("", 96, 0, 1, 201)
+GUICtrlSetBkColor(-1, 0xFFFFFF)
+GUICtrlCreateGroup("", -99, -99, 1, 1)
+#EndRegion ### END Target GUI ###
 
 While 1
    $nMsg = GUIGetMsg()
@@ -93,8 +116,8 @@ While 1
 		 ExitScript()
 	  Case $GUI_EVENT_START
 		 GUICtrlSetData($GUI_EVENT_START, "ESC = exit")
-
 		 Requierments()
+
    EndSwitch
 WEnd
 
@@ -201,7 +224,7 @@ Func ReadTargets()
    _ArrayAdd($pixels, $read)
    $rdm = Random(0, Ubound($pixels) - 1, 1)
    ;Code by Theo
-   Local $pixelString = $pixels[$rdm]
+   Global $pixelString = $pixels[$rdm]
    Global $splitArr = StringSplit($pixelString, ", ")
 
    Start()
@@ -212,17 +235,11 @@ Func Start()
    While 1
 	  Global $1 = PixelSearch($mapMaxLeft, $mapMaxTop, $mapMaxRight, $mapMaxBottom, $enemyColor, 2)
 	  Global $2 = PixelSearch($mapMaxLeft, $mapMaxTop, $mapMaxRight, $mapMaxBottom, $meColor, 2)
-	  Global $8 = PixelGetColor(1357, 585) ; Turn Bar(start from bottom)
-
-	  For $a = 1 To $splitArr[0]
-		 Local $nextColor = $splitArr[$a]
-		 Global $monster = PixelSearch($mapMaxLeft, $mapMaxTop, $mapMaxRight, $mapMaxBottom, $nextColor, 1)
-	  Next
 
 	  Global $4 = PixelGetColor(1177, 59) ; HealthColor(middle)
 
 	  Global $5 = _ImageSearch($imageUrl & $closeBtn)
-
+	  Global $8 = PixelGetColor(1357, 585) ; Turn Bar(start from bottom)
 	  Global $9 = _ImageSearch($imageUrl & $succes[0])
 	  Global $10 = PixelGetColor(1211, 552)
 
@@ -240,10 +257,33 @@ Func Start()
 		 ClaimSucces()
 	  ElseIf $10 = 0xC6F152 And $boostStats = True Then
 		 BoostStats()
-	  ElseIf IsArray($monster) Then
-		 AttackTarget()
 	  EndIf
+
+	  $attemps = 0
+	  $a = 0
+	  Do
+		 $a = $a + 1
+		 debug("Color picked : " & $splitArr[$a] & " out of " & $splitArr[0])
+		 Global $scan = PixelSearch($mapMaxLeft, $mapMaxTop, $mapMaxRight, $mapMaxBottom, $splitArr[$a], 1)
+		 If Not @error Then
+			debug("Color : Succes (" & $splitArr[$a] & ")")
+			$attempps = 0 + $splitArr[0]
+			AttackTarget()
+		 Else
+			$attemps = $attemps + 1
+			debug("Color : Fail n°" & $attemps)
+		 EndIf
+	  Until $attemps = $splitArr[0]
    WEnd
+EndFunc
+
+Func AttackTarget()
+   info("Fight incoming...")
+   Sleep($sleep)
+
+   MouseClick("", $scan[0], $scan[1], 2, 15)
+
+   Start()
 EndFunc
 
 Func RunAround()
@@ -253,15 +293,6 @@ Func RunAround()
    ;TODO (HoPollo) : Implement random map switching
 ;~    Local $direction = Random(0, UBound($mapMax) - 1, 1)
 ;~    MouseClick("", $maxMap[$direction])
-
-   Start()
-EndFunc
-
-Func AttackTarget()
-   info("Fight incoming...")
-   Sleep($sleep)
-
-   MouseClick("", $monster[0], $monster[1], 2, 15)
 
    Start()
 EndFunc
@@ -288,17 +319,15 @@ Func Positionning()
 EndFunc
 
 Func CombatSettings()
-;~    ;ISSUE : Not finding 10/10 Spec Icon
-;~    Sleep($sleep)
+   Sleep($sleep)
 
-;~    MouseClick("", 1168, 94) ; Develop top menu slider
+   MouseClick("", 1168, 94) ; Develop top menu slider
 
-;~    $lock = _ImageSearch($imageUrl & $specBtn)
-;~    Sleep(250)
-;~    If IsArray($lock) Then
-;~ 	  MouseClick("", $lock[0], $lock[1])
-;~ 	  $specLock = True
-;~    EndIf
+   $lock = _ImageSearch($imageUrl & $specBtn)
+   If IsArray($lock) Then
+	  MouseClick("", $lock[0], $lock[1])
+	  $specLock = True
+   EndIf
 EndFunc
 
 Func SearchingCoord()
