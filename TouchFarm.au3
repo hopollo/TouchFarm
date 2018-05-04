@@ -236,6 +236,23 @@ Func Start()
 	  Global $1 = PixelSearch($mapMaxLeft, $mapMaxTop, $mapMaxRight, $mapMaxBottom, $enemyColor, 2)
 	  Global $2 = PixelSearch($mapMaxLeft, $mapMaxTop, $mapMaxRight, $mapMaxBottom, $meColor, 2)
 
+	  Local $attemps = 0
+	  local $a = 0
+	  Do
+		 $a = $a + 1
+		 debug("Color picked : " & $splitArr[$a] & " out of " & $splitArr[0])
+		 Global $scan = PixelSearch($mapMaxLeft, $mapMaxTop, $mapMaxRight, $mapMaxBottom, $splitArr[$a], 1)
+		 If Not @error Then
+			debug("Color : Succes (" & $splitArr[$a] & ")")
+			$attempps = 0 + $splitArr[0]
+			AttackTarget()
+			ExitLoop
+		 Else
+			$attemps = $attemps + 1
+			debug("Color : Fail n°" & $attemps)
+		 EndIf
+	  Until $attemps = $splitArr[0]
+
 	  Global $4 = PixelGetColor(1177, 59) ; HealthColor(middle)
 
 	  Global $5 = _ImageSearch($imageUrl & $closeBtn)
@@ -258,22 +275,6 @@ Func Start()
 	  ElseIf $10 = 0xC6F152 And $boostStats = True Then
 		 BoostStats()
 	  EndIf
-
-	  $attemps = 0
-	  $a = 0
-	  Do
-		 $a = $a + 1
-		 debug("Color picked : " & $splitArr[$a] & " out of " & $splitArr[0])
-		 Global $scan = PixelSearch($mapMaxLeft, $mapMaxTop, $mapMaxRight, $mapMaxBottom, $splitArr[$a], 1)
-		 If Not @error Then
-			debug("Color : Succes (" & $splitArr[$a] & ")")
-			$attempps = 0 + $splitArr[0]
-			AttackTarget()
-		 Else
-			$attemps = $attemps + 1
-			debug("Color : Fail n°" & $attemps)
-		 EndIf
-	  Until $attemps = $splitArr[0]
    WEnd
 EndFunc
 
